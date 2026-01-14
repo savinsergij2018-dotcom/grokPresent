@@ -1,0 +1,43 @@
+target byteorder little;
+
+export _start;
+export crypt_buffer;
+
+import "libc" malloc;
+import "libc" free;
+
+section "data" {
+    key: bits32 = 0xDEADBEEF;
+}
+
+crypt_buffer(bits64 buf, bits64 len) {
+    bits64 i;
+    bits8 b;
+    i = 0;
+    
+    loop:
+    if i >= len {
+        return;
+    }
+    
+    b = bits8[buf + i];
+    b = b ^ 0x55;
+    bits8[buf + i] = b;
+    
+    i = i + 1;
+    goto loop;
+}
+
+_start() {
+    bits64 ptr;
+    ptr = foreign "C" malloc(1024);
+    
+    if ptr == 0 {
+        return (1);
+    }
+    
+    foreign "C" crypt_buffer(ptr, 1024);
+    foreign "C" free(ptr);
+    
+    return (0);
+}
